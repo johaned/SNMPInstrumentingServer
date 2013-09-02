@@ -20,5 +20,6 @@ public class Layout {
     public static String HOSTNAME = "Test";
     public static String PORT = "9999";
     public static int QUERYINGINTERVAL = 1000;
-    
+    public static int SNMPTRAPPORT = 1234;
+
 }
