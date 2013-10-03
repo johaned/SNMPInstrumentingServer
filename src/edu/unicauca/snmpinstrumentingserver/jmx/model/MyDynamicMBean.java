@@ -20,6 +20,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
+import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -42,13 +43,11 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 	private String name;
 	private String type;
 	private int changeCount=1;
-        private int index;
 
-	public MyDynamicMBean(String xmlFileName, int index) throws IOException {
+	public MyDynamicMBean(String xmlFileName, int order) throws IOException {
 		this.properties = new Properties();
 		this.xmlFileName = xmlFileName;
-                this.index=index;
-		loadXml();
+		loadXml(order);
 	}
 
 
@@ -86,7 +85,7 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 			throw new AttributeNotFoundException(name);
 		Object value = attribute.getValue();
 		this.properties.setProperty(name, changeTypeToString(value));
-		Notification notification = new AttributeChangeNotification(this, changeCount++, System.currentTimeMillis(), "Attribute value changed", attribute.getName(), attribute.getValue().getClass().getName(), value, value);
+		Notification notification = new AttributeChangeNotification(this, changeCount++, System.currentTimeMillis()/1000, "Attribute value changed", attribute.getName(), attribute.getValue().getClass().getName(), value, value);
         sendNotification(notification, attribute);
 	}
 
@@ -108,7 +107,6 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 			Object value = attr.getValue();
 			this.properties.setProperty(name, changeTypeToString(value));
 			retlist.add(new Attribute(name, value));
-			
 			Notification notification = new AttributeChangeNotification(this, changeCount++, System.currentTimeMillis(), "Attribute value changed", attr.getName(), attr.getValue().getClass().getName(), value, value);
 	        sendNotification(notification, attr);
 		}
@@ -116,16 +114,19 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 		return retlist;
 	}
 	
-	public Object invoke(String name, Object[] args, String[] sig) throws MBeanException, ReflectionException {
-		if ((name.equals("reload")) && ((args == null) || (args.length == 0)) && ((sig == null) || (sig.length == 0))) {
-			System.out.println("invocado reload");
-			try {
-				loadXml();
-				return null;
-			} catch (IOException e) {
-				throw new MBeanException(e);
-			}
+	public void setAttributes(ObjectName oname, AttributeList list) {
+		Attribute[] attrs = (Attribute[]) list.toArray(new Attribute[0]);
+		long timestamp=System.currentTimeMillis()/1000;
+		for (Attribute attr : attrs) {
+			String name = attr.getName();
+			Object value = attr.getValue();
+			this.properties.setProperty(name, changeTypeToString(value));
+			Notification notification = new AttributeChangeNotification(this, 0, timestamp, "Attribute value changed", attr.getName(), attr.getValue().getClass().getName(), value, value);
+	        sendNotification(notification, attr);
 		}
+	}
+	
+	public Object invoke(String name, Object[] args, String[] sig) throws MBeanException, ReflectionException {
 		throw new ReflectionException(new NoSuchMethodException(name));
 	}
 
@@ -149,12 +150,13 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 		return mbinfo;
 	}
 
-	private void loadXml() throws IOException {
+	private void loadXml(int order) throws IOException {
 		Serializer serializer = new Persister();
 		File source = new File(xmlFileName);
 		try {
 			MyManRes manres= serializer.read(MyManRes.class, source);
-			mbeaninfo = manres.getMacroAttributes()[index];
+			//mbeaninfo = serializer.read(MyMBeanInfo.class, source);
+			mbeaninfo = manres.getMacroAttributes()[order];
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -178,7 +180,7 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
 
 	public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) throws IllegalArgumentException {
 		if (listener != null)
-            	_listeners.add(new ListenerFilterHandbackTriplet(listener, filter, null));
+            	_listeners.add(new ListenerFilterHandbackTriplet(listener, filter, handback));
 	}
 
 	public void removeNotificationListener(NotificationListener arg0) throws ListenerNotFoundException {
@@ -194,9 +196,13 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
             Properties props = new Properties();
             props.setProperty("attribute", attribute.getName());
             props.setProperty("value", changeTypeToString(attribute.getValue()));
+            props.setProperty("domain", getDomain());
+            props.setProperty("type", getType());
+            props.setProperty("name", getName());
             notification.setUserData(props);
+            //System.out.println("handback="+triplet.toString());
             try {
-				listener.handleNotification(notification, new ObjectName(getDomain() + ":type=" + getType()));
+				listener.handleNotification(notification, new ObjectName(getDomain() + ":type=" + getType()+",name="+getName()));
 			} catch (MalformedObjectNameException e) {
 				e.printStackTrace();
 			}
@@ -204,12 +210,12 @@ public class MyDynamicMBean implements DynamicMBean, NotificationEmitter{
     }
 	
 	public void sendNotification (String type, String message) {
-        Notification notification = new Notification(type, this, 0,System.currentTimeMillis(),message);    
+        Notification notification = new Notification(type, this, 0,System.currentTimeMillis(),message);
         for (int aa = 0; aa < _listeners.size(); aa++) {
             ListenerFilterHandbackTriplet triplet = (ListenerFilterHandbackTriplet)_listeners.get(aa);
             NotificationListener listener = triplet.getListener();
 	        try {
-				listener.handleNotification(notification, new ObjectName(getDomain() + ":type=" + getType()));
+				listener.handleNotification(notification, new ObjectName(getDomain() + ":type=" + getType()+",name="+getName()));
 			} catch (MalformedObjectNameException e) {
 				e.printStackTrace();
 			}
