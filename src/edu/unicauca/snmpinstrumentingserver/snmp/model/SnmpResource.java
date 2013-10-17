@@ -62,7 +62,7 @@ public class SnmpResource extends SnmpManager implements Runnable {
                     }else{
                         System.out.println("-- Reporting the change!"); 
                         previousValues.put(mbai.getReferenceProtocol(),currentValue);
-                        MBeanServerController.changeAttribute("SNMPInstrumentingServer", "MediaServer", name, mbai.getName(), currentValue);
+                        MBeanServerController.changeAttribute("SNMPInstrumentingServer", serverName, name, mbai.getName(), currentValue);
                     }
                 }
                 System.out.println("--------------------------------------------------------------------------------");

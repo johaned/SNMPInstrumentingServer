@@ -22,6 +22,10 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+import com.sun.jersey.api.container.httpserver.HttpServerFactory;
+import com.sun.net.httpserver.HttpServer;
+import java.util.ArrayList;
+
 /**
  *
  * @author stcav
@@ -31,9 +35,16 @@ public class SNMPInstrumentingServer {
     /**
      * @param args the command line arguments
      */
+    
+    private static final String BASE_URI = "http://0.0.0.0:9998/snmp_mbs/";
+    private static HttpServer server; 
+    public static List<MyDynamicMBean> mdmbs = new ArrayList<MyDynamicMBean>();
+    public static List<SnmpResource> srs = new ArrayList<SnmpResource>();
+    
+    
     public static void main(String[] args) {
-        List<MyDynamicMBean> mdmbs;
-        List<SnmpResource> srs;
+        //List<MyDynamicMBean> mdmbs;
+        //List<SnmpResource> srs;
         JMXConnectorServer cs = null;
        
         to_configure_JMXAgent();
@@ -50,13 +61,22 @@ public class SNMPInstrumentingServer {
             e.printStackTrace();
         }
         
-        mdmbs = DynamicMBeanFactory.mbeans_register(Layout.PATHMBEANDESCRIPTOR, Layout.MEDIASERVER);
+        try {
+            server = HttpServerFactory.create(BASE_URI);
+            server.start();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        /*mdmbs = DynamicMBeanFactory.mbeans_register(Layout.PATHMBEANDESCRIPTOR, Layout.MEDIASERVER);
         srs = DynamicSnmpResourceFactory.snmp_resource_register(Layout.PATHMBEANDESCRIPTOR, Layout.MEDIASERVER);
         
         for (SnmpResource snmpResource : srs) {
             snmpResource.startManaging();
             snmpResource.run();    
-        }
+        }*/
         
         
     }

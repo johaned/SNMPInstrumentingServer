@@ -5,6 +5,7 @@ dist/
 nbdist/
 nbactions.xml
 nb-configuration.xml
+nbproject/project.properties
 
 # Class Files #
 *.class

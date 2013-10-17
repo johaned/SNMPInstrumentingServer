@@ -70,4 +70,25 @@ public class DynamicSnmpResourceFactory {
         }
         return srs;
     }
+    
+    public static List<SnmpResource> remote_snmp_resource_register(String xml_descriptor) {
+        List<SnmpResource> srs = new ArrayList<SnmpResource>();
+        
+        try {
+            Serializer serializer = new Persister();
+            MyManRes mmr = serializer.read(MyManRes.class, xml_descriptor);
+            int index=0;
+            for (MyMBeanInfo mmbi : mmr.getMacroAttributes()) {
+                System.out.println("--> mmbi: "+ mmbi.getName());
+                System.out.println("--> [ domain: "+mmr.getDomain() +" name: "+mmbi.getName()+" type: "+mmr.getName()+ " nameFile: "+mmr.getName()+" ]");
+                srs.add(new SnmpResource(mmbi.getAttributes(), mmr.getReferenceProtocol(), Layout.QUERYINGINTERVAL, mmr.getName(), mmbi.getName()));
+                System.out.println("--> |Added SNMP Resource: "+srs.get(srs.size()-1).getName()+"| ");
+                index++;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return srs;
+    }
 }
