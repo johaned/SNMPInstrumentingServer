@@ -11,7 +11,7 @@ package edu.unicauca.snmpinstrumentingserver.model;
  */
 public class Layout {
     
-    public static String PATHMBEANDESCRIPTOR="/home/johaned/javaspace/university/stcav/gestv/InstrumentFolder/snmp";
+    public static String PATHMBEANDESCRIPTOR="/home/gestv/InstrumentFolder";
     
     //JMX Server Labels
     public static String MEDIASERVER = "MediaServer";
@@ -19,7 +19,7 @@ public class Layout {
     // Server Config
     public static String HOSTNAME = "Test";
     public static String PORT = "9999";
-    public static int QUERYINGINTERVAL = 1000;
+    public static int QUERYINGINTERVAL = 10000;
     public static int SNMPTRAPPORT = 1234;
 
 }

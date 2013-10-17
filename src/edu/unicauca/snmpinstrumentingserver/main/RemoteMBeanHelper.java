@@ -24,26 +24,25 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import edu.unicauca.snmpinstrumentingserver.jmx.logic.DynamicMBeanFactory;
+import edu.unicauca.snmpinstrumentingserver.jmx.model.MyDynamicMBean;
 import edu.unicauca.snmpinstrumentingserver.snmp.logic.DynamicSnmpResourceFactory;
 
 import edu.unicauca.snmpinstrumentingserver.model.Layout;
 import edu.unicauca.snmpinstrumentingserver.snmp.model.SnmpResource;
+import java.util.ArrayList;
 
 @Path("/")
 public class RemoteMBeanHelper {
 
 	// Registra un MR para su gestion
-	//curl -d "ip=192.168.119.35&port=10001&domain=broadcaster&type=Webservices" http://192.168.119.35:9998/snmp_mbs/register
+	// curl -d "domain=SNMPInstrumentingServer&type=BroadcasterServer" http://192.168.119.35:9998/snmp_mbs/register
 	@POST
 	@Path("/register")
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public String register(
-			@FormParam("ip") String ip,
-			@FormParam("port") String port,
 			@FormParam("domain") String domain, 
 			@FormParam("type") String type) {
-		System.out.println(ip+" "+port+" "+domain+" "+type);
                 SNMPInstrumentingServer.mdmbs = DynamicMBeanFactory.mbeans_register(Layout.PATHMBEANDESCRIPTOR, type);
                 SNMPInstrumentingServer.srs = DynamicSnmpResourceFactory.snmp_resource_register(Layout.PATHMBEANDESCRIPTOR, type);
 
@@ -55,15 +54,38 @@ public class RemoteMBeanHelper {
 	}
 
 	// Remueve el registro de un MR
-	//curl -d "ip=192.168.119.35&port=10001" -X DELETE http://192.168.119.35:9998/snmp_mbs/broadcaster/Webservices
+	// curl -X DELETE http://192.168.119.35:9998/snmp_mbs/BroadcasterServer/broadcasterTest
 	@DELETE
-	@Path("/{domain}/{type}")
+	@Path("/{type}/{name}")
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public String remove(
-			@FormParam("ip") String ip,
-			@FormParam("port") String port){
-                System.out.println(ip+" "+port);
+                          @PathParam("type") String type,
+               		  @PathParam("name") String name){
+                for (MyDynamicMBean mbean : SNMPInstrumentingServer.mdmbs) {
+                    if(mbean.getName().equals(name) && mbean.getType().equals(type)){
+                        SNMPInstrumentingServer.mdmbs.remove(mbean);
+                        break;
+                    }
+                }
+                DynamicMBeanFactory.removeDynamicBean("SNMPInstrumentingServer",name,type);
+                
+                
+                List<Integer> resindices = new ArrayList<Integer>();
+                
+                for (int i = 0; i < SNMPInstrumentingServer.srs.size(); i++ ) {
+                    SnmpResource snmpResource = SNMPInstrumentingServer.srs.get(i);
+                    if(snmpResource.getServerName().equals(type) && snmpResource.getName().equals(name)){
+                        snmpResource.stoptManaging();
+                        snmpResource.kill();
+                        resindices.add(i);
+                    }
+                }
+                SNMPInstrumentingServer.srs.remove(0);
+                
+                for(int i = 0; i < resindices.size(); i++)
+                    SNMPInstrumentingServer.srs.remove(resindices.get(i));
+                
 		return "";
 	}
 	
