@@ -36,7 +36,7 @@ public class SNMPInstrumentingServer {
      * @param args the command line arguments
      */
     
-    private static final String BASE_URI = "http://0.0.0.0:9998/snmp_mbs/";
+    private static final String BASE_URI = "http://0.0.0.0:9997/snmp_mbs/";
     private static HttpServer server; 
     public static List<MyDynamicMBean> mdmbs = new ArrayList<MyDynamicMBean>();
     public static List<SnmpResource> srs = new ArrayList<SnmpResource>();

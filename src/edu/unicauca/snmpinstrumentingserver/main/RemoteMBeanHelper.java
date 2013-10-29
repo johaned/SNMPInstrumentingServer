@@ -43,6 +43,7 @@ public class RemoteMBeanHelper {
 	public String register(
 			@FormParam("domain") String domain, 
 			@FormParam("type") String type) {
+            String retorno="fail";
                 SNMPInstrumentingServer.mdmbs = DynamicMBeanFactory.mbeans_register(Layout.PATHMBEANDESCRIPTOR, type);
                 SNMPInstrumentingServer.srs = DynamicSnmpResourceFactory.snmp_resource_register(Layout.PATHMBEANDESCRIPTOR, type);
 
@@ -50,7 +51,9 @@ public class RemoteMBeanHelper {
                     snmpResource.startManaging();
                      (new Thread(snmpResource)).start();
                 }
-		return "";
+                if(SNMPInstrumentingServer.mdmbs.size()>0)
+                    retorno="ok";
+		return retorno;
 	}
 
 	// Remueve el registro de un MR

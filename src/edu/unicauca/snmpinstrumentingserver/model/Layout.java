@@ -18,7 +18,7 @@ public class Layout {
     
     // Server Config
     public static String HOSTNAME = "Test";
-    public static String PORT = "9999";
+    public static String PORT = "9998";
     public static int QUERYINGINTERVAL = 10000;
     public static int SNMPTRAPPORT = 1234;
 
